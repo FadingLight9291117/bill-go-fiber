@@ -1,11 +1,21 @@
 version: '3.8'
 
 services:
+  app:
+    image: bill-go
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+
   mongo:
-    image: mongo
+    image: mongo:focal
     restart: always
     ports:
       - "27017:27017"
+    volumes:
+      - bill:/data/db
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: 123456
@@ -19,3 +29,8 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: 123456
       ME_CONFIG_MONGODB_URL: mongodb://root:123456@mongo:27017
+    depends_on:
+      - mongo
+
+volumes:
+  bill: {}

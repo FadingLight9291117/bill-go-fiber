@@ -49,6 +49,9 @@ func main() {
 	app.Use(requestid.New())
 	app.Use(logger.New())
 
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Hello, world!")
+	})
 	app.Get("/list", list)
 	app.Post("/create", create)
 	app.Get("/search/:year/:month", search)
@@ -90,7 +93,7 @@ func list(c *fiber.Ctx) error {
 	if err != nil {
 		return c.SendStatus(500)
 	}
-	var bills []bson.M
+	bills := []bson.M{}
 	if err := cursor.All(context.TODO(), &bills); err != nil {
 		return err
 	}

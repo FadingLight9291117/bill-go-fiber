@@ -3,8 +3,9 @@ package lib
 import (
 	"bill/model"
 	"encoding/csv"
-	"github.com/samber/lo"
 	"os"
+
+	"github.com/samber/lo"
 )
 
 func ReadCsv(path string, title bool) ([]model.Bill, error) {
@@ -36,4 +37,9 @@ func ReadCsv(path string, title bool) ([]model.Bill, error) {
 		}
 	})
 	return billList, nil
+}
+
+func main() {
+	// billList, _ := ReadCsv("../files/bill_2022_8.csv", true)
+	
 }
