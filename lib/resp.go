@@ -9,4 +9,4 @@ type ResponseBody struct {
 func Resp(data interface{}) *ResponseBody { return &ResponseBody{Code: 0, Data: data} }
 func EmptyResp() *ResponseBody            { return &ResponseBody{Code: 0} }
 
-//func ErrorResp(err error) *ResponseBody   { return &ResponseBody{Message: err.Error()} }
+func ErrorResp(err error) *ResponseBody { return &ResponseBody{Message: err.Error()} }

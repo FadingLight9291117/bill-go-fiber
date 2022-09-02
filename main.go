@@ -8,10 +8,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"github.com/gofiber/fiber/v2/utils"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -59,18 +59,50 @@ func main() {
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("POST"))))
 }
 
+var validate = validator.New()
+
 // var routes   [string][func (c *fiber.Ctx) error]map
+type SearchParam struct {
+	Year  string `json:"year" validate:"required"`
+	Month string `json:"month" validate:"required"`
+}
+
 func search(c *fiber.Ctx) error {
+	searchParam := new(SearchParam)
+	if err := c.ParamsParser(searchParam); err != nil {
+		return c.Status(400).JSON(lib.ErrorResp(err))
+	}
+
+	if err := validate.Struct(searchParam); err != nil {
+		return c.Status(400).JSON(lib.ErrorResp(err))
+	}
+
+	listQuery := new(ListQuery)
+	if err := c.QueryParser(listQuery); err != nil {
+		return c.Status(400).JSON(lib.ErrorResp(err))
+	}
+
+	if err := validate.Struct(listQuery); err != nil {
+		return c.Status(400).JSON(lib.ErrorResp(err))
+	}
+
 	var (
-		year  = utils.CopyString(c.Params("year"))
-		month = utils.CopyString(c.Params("month"))
+		year  = searchParam.Year
+		month = searchParam.Month
+		skip  = int64(listQuery.Skip)
+		limit = int64(listQuery.Limit)
 	)
-	cursor, _ := billsCol.Find(context.TODO(), bson.M{"date": bson.M{
-		"$regex": year + "-" + month,
-	}})
+
+	regex := year + "." + month
+	filter := bson.D{{"date", bson.D{{"$regex", regex}}}}
+	opts := options.Find().SetSkip(skip)
+	if listQuery.Limit > -1 {
+		opts = opts.SetLimit(limit)
+	}
+	cursor, _ := billsCol.Find(context.TODO(), filter, opts)
 	bills := make([]model.Bill, 0)
 	if err := cursor.All(context.TODO(), &bills); err != nil {
-		return c.Status(500).SendString(err.Error())
+		return c.Status(500).JSON(lib.ErrorResp(err))
 	}
 	return c.Status(200).JSON(lib.Resp(bills))
 }
@@ -87,15 +119,40 @@ func create(c *fiber.Ctx) error {
 	return c.Status(200).JSON(lib.Resp(&fiber.Map{"id": insertOneResult.InsertedID}))
 }
 
+type ListQuery struct {
+	Skip  int `validate:"min=0"`
+	Limit int `validate:"min=0"` // 0 represents no limit
+}
+
 func list(c *fiber.Ctx) error {
-	//billList, err := ReadCsv(path, true)
-	cursor, err := db.Collection("bills").Find(context.TODO(), bson.D{})
+	listQuery := new(ListQuery)
+	if err := c.QueryParser(listQuery); err != nil {
+		return c.Status(400).JSON(lib.ErrorResp(err))
+	}
+
+	err := validate.Struct(listQuery)
 	if err != nil {
-		return c.SendStatus(500)
+		return c.Status(400).JSON(lib.ErrorResp(err))
+	}
+
+	var (
+		skip  = int64(listQuery.Skip)
+		limit = int64(listQuery.Limit)
+	)
+
+	opts := options.Find().SetSkip(skip)
+	if listQuery.Limit > -1 {
+		opts = opts.SetLimit(limit)
+	}
+
+	cursor, err := db.Collection("bills").Find(context.TODO(), bson.D{}, opts)
+
+	if err != nil {
+		return c.Status(500).JSON(lib.ErrorResp(err))
 	}
 	bills := []bson.M{}
 	if err := cursor.All(context.TODO(), &bills); err != nil {
-		return err
+		return c.Status(500).JSON(lib.ErrorResp(err))
 	}
 	return c.Status(200).JSON(lib.Resp(bills))
 }
