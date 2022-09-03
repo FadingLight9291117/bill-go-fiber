@@ -62,13 +62,17 @@ func main() {
 var validate = validator.New()
 
 // var routes   [string][func (c *fiber.Ctx) error]map
-type SearchParam struct {
-	Year  string `json:"year" validate:"required"`
-	Month string `json:"month" validate:"required"`
-}
 
 func search(c *fiber.Ctx) error {
-	searchParam := new(SearchParam)
+	type Query struct {
+		Skip  int `validate:"min=0"`
+		Limit int `validate:"min=0"` // 0 represents no limit
+	}
+	type Param struct {
+		Year  string `json:"year" validate:"required"`
+		Month string `json:"month" validate:"required"`
+	}
+	searchParam := new(Param)
 	if err := c.ParamsParser(searchParam); err != nil {
 		return c.Status(400).JSON(lib.ErrorResp(err))
 	}
@@ -77,7 +81,7 @@ func search(c *fiber.Ctx) error {
 		return c.Status(400).JSON(lib.ErrorResp(err))
 	}
 
-	listQuery := new(ListQuery)
+	listQuery := new(Query)
 	if err := c.QueryParser(listQuery); err != nil {
 		return c.Status(400).JSON(lib.ErrorResp(err))
 	}
@@ -119,13 +123,13 @@ func create(c *fiber.Ctx) error {
 	return c.Status(200).JSON(lib.Resp(&fiber.Map{"id": insertOneResult.InsertedID}))
 }
 
-type ListQuery struct {
-	Skip  int `validate:"min=0"`
-	Limit int `validate:"min=0"` // 0 represents no limit
-}
-
 func list(c *fiber.Ctx) error {
-	listQuery := new(ListQuery)
+	type Query struct {
+		Skip  int `validate:"min=0"`
+		Limit int `validate:"min=0"` // 0 represents no limit
+	}
+
+	listQuery := new(Query)
 	if err := c.QueryParser(listQuery); err != nil {
 		return c.Status(400).JSON(lib.ErrorResp(err))
 	}
