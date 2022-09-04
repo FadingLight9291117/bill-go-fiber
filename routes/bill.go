@@ -15,7 +15,8 @@ import (
 var db *mongo.Database
 var validate = validator.New()
 
-func BillRoutes(app *fiber.App, db *mongo.Database) {
+func BillRoutes(app *fiber.App, mongoDb *mongo.Database) {
+	db = mongoDb
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, world!")
 	})
