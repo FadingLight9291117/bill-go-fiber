@@ -14,6 +14,7 @@ import (
 
 var db *mongo.Database
 var validate = validator.New()
+var class *model.Class
 
 func BillRoutes(app *fiber.App, mongoDb *mongo.Database) {
 	db = mongoDb
@@ -24,6 +25,21 @@ func BillRoutes(app *fiber.App, mongoDb *mongo.Database) {
 	app.Get("/list", list)
 	app.Post("/create", create)
 	app.Get("/search/:year/:month", search)
+	app.Get("/class", getClass)
+}
+
+func getClass(c *fiber.Ctx) error {
+	if class != nil {
+		return c.Status(200).JSON(lib.Resp(class))
+	} else {
+		cls, err := lib.GetClsAndLabel("config/class.yaml")
+		if err != nil {
+			return c.Status(500).JSON(lib.ErrorResp(err))
+		}
+		class = cls
+		return c.Status(200).JSON(lib.Resp(cls))
+	}
+
 }
 
 // var routes   [string][func (c *fiber.Ctx) error]map
@@ -118,7 +134,7 @@ func list(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(lib.ErrorResp(err))
 	}
-	bills := []bson.M{}
+	var bills []bson.M
 	if err := cursor.All(context.TODO(), &bills); err != nil {
 		return c.Status(500).JSON(lib.ErrorResp(err))
 	}
