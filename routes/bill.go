@@ -94,11 +94,11 @@ func search(c *fiber.Ctx) error {
 func create(c *fiber.Ctx) error {
 	bill := &model.Bill{}
 	if err := c.BodyParser(bill); err != nil {
-		return c.Status(400).JSON(err)
+		return c.Status(400).JSON(lib.ErrorResp(err))
 	}
 	insertOneResult, err := db.Collection("bills").InsertOne(context.TODO(), bill)
 	if err != nil {
-		return err
+		return c.Status(500).JSON(lib.ErrorResp(err))
 	}
 	return c.Status(200).JSON(lib.Resp(&fiber.Map{"id": insertOneResult.InsertedID}))
 }
