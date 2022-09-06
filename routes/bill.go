@@ -4,6 +4,9 @@ import (
 	"bill/lib"
 	"bill/model"
 	"context"
+	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -71,13 +74,17 @@ func search(c *fiber.Ctx) error {
 	}
 
 	var (
-		year  = searchParam.Year
-		month = searchParam.Month
-		skip  = int64(listQuery.Skip)
-		limit = int64(listQuery.Limit)
+		year, err1  = strconv.Atoi(searchParam.Year)
+		month, err2 = strconv.Atoi(searchParam.Month)
+		skip        = int64(listQuery.Skip)
+		limit       = int64(listQuery.Limit)
 	)
+	if err1 != nil && err2 != nil {
+		return c.Status(400).JSON(lib.ErrorResp(fmt.Errorf("参数格式错误")))
+	}
 
-	regex := year + "." + month
+	date := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.Now().Location())
+	regex := date.Format("2006-01")
 	filter := bson.D{{"date", bson.D{{"$regex", regex}}}}
 	opts := options.Find().SetSkip(skip)
 	if listQuery.Limit > -1 {
