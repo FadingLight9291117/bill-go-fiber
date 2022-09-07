@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: registry.cn-hangzhou.aliyuncs.com/fadinglight/bill-go
+    image: bill-go:dev
     restart: always
     ports:
       - "8080:8080"
