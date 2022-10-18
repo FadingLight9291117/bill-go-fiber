@@ -1,3 +1,5 @@
+go mod vendor
+
 docker build . -t registry.cn-hangzhou.aliyuncs.com/fadinglight/bill-go:dev
 
 docker push registry.cn-hangzhou.aliyuncs.com/fadinglight/bill-go:dev
